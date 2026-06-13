@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Michaels 60. Geburtstag auf Sylt</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -38,8 +38,11 @@
       height: 100%;
     }
     body {
+      min-height: 100svh;
       background:
         radial-gradient(140% 120% at 50% -10%, #fdfbf7 0%, #f7f3ec 45%, #efe7d8 100%);
+      background-attachment: fixed;
+      -webkit-tap-highlight-color: transparent;
     }
 
     /* ---- Hintergrund-Collage auf der Frage-Seite ---- */
@@ -56,7 +59,17 @@
       overflow: hidden;
     }
     @media (max-width: 640px) {
-      #collage { grid-template-columns: repeat(3, 1fr); }
+      #collage {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        padding: 8px;
+      }
+      #collage img { border-width: 5px; }
+      /* Auf dem Handy etwas deckender, damit Text/Buttons klar lesbar bleiben */
+      #collage-veil {
+        background:
+          radial-gradient(75% 60% at 50% 45%, rgba(247,243,236,0.96) 0%, rgba(247,243,236,0.86) 50%, rgba(239,231,216,0.72) 100%);
+      }
     }
     #collage img {
       width: 100%;
@@ -203,32 +216,33 @@
   <div id="collage" aria-hidden="true"></div>
   <div id="collage-veil" aria-hidden="true"></div>
 
-  <main class="pointer-events-none relative z-10 min-h-screen flex items-center justify-center px-6 py-12">
+  <main class="pointer-events-none relative z-10 flex items-center justify-center px-5 sm:px-6 py-10 sm:py-12"
+        style="min-height: 100svh; padding-left: max(1.25rem, env(safe-area-inset-left)); padding-right: max(1.25rem, env(safe-area-inset-right)); padding-top: max(2.5rem, env(safe-area-inset-top)); padding-bottom: max(2.5rem, env(safe-area-inset-bottom));">
 
     <!-- ===================== FRAGE-ANSICHT ===================== -->
     <section id="view-frage" class="view pointer-events-auto text-center max-w-2xl fade-up">
-      <p class="font-serif italic text-gold text-xl sm:text-2xl tracking-wide mb-3">
+      <p class="font-serif italic text-gold text-lg sm:text-2xl tracking-wide mb-2 sm:mb-3">
         Sylt &middot; 60. Geburtstag
       </p>
 
-      <h1 class="font-serif font-medium leading-tight text-4xl sm:text-6xl text-navy mb-4">
+      <h1 class="font-serif font-medium leading-tight text-4xl sm:text-6xl text-navy mb-3 sm:mb-4">
         Lieber Michael,
       </h1>
 
-      <h2 class="font-serif text-3xl sm:text-5xl text-navy/90 mb-12">
+      <h2 class="font-serif text-2xl sm:text-5xl text-navy/90 mb-8 sm:mb-12">
         Freust du dich, dass wir kommen?
       </h2>
 
-      <div class="question-card rounded-[2rem] px-6 sm:px-10 py-8 sm:py-10">
-        <p class="font-serif text-2xl sm:text-3xl text-navy/80 mb-7">
+      <div class="question-card rounded-[1.75rem] sm:rounded-[2rem] px-5 sm:px-10 py-7 sm:py-10">
+        <p class="font-serif text-xl sm:text-3xl text-navy/80 mb-6 sm:mb-7">
           Deine Lieblingsneffen kommen!
         </p>
 
         <!-- Buttons-Container: relativ, damit der "Nein"-Button sich frei platzieren kann -->
-        <div class="flex items-center justify-center gap-6">
+        <div class="flex items-center justify-center gap-4 sm:gap-6">
           <button
             id="btn-ja"
-            class="px-12 py-4 rounded-full bg-navy text-white text-lg font-medium tracking-wide
+            class="px-10 sm:px-12 py-3.5 sm:py-4 rounded-full bg-navy text-white text-base sm:text-lg font-medium tracking-wide
                    shadow-lg shadow-navy/20 transition-all duration-200
                    hover:bg-[#162842] hover:-translate-y-0.5 hover:shadow-xl
                    focus:outline-none focus:ring-4 focus:ring-navy/20"
@@ -238,8 +252,8 @@
 
           <button
             id="btn-nein"
-            class="px-12 py-4 rounded-full border-2 border-navy/30 bg-white/70 text-navy/70
-                   text-lg font-medium tracking-wide shadow-md backdrop-blur"
+            class="px-10 sm:px-12 py-3.5 sm:py-4 rounded-full border-2 border-navy/30 bg-white/70 text-navy/70
+                   text-base sm:text-lg font-medium tracking-wide shadow-md backdrop-blur whitespace-nowrap"
           >
             Nein
           </button>
@@ -252,11 +266,11 @@
 
     <!-- ===================== JA-ANSICHT ===================== -->
     <section id="view-ja" class="view pointer-events-auto hidden text-center max-w-4xl">
-      <p class="font-serif italic text-gold text-xl sm:text-2xl tracking-wide mb-3">
+      <p class="font-serif italic text-gold text-lg sm:text-2xl tracking-wide mb-2 sm:mb-3">
         Wir sehen uns auf Sylt!
       </p>
 
-      <h1 class="font-serif font-medium leading-tight text-4xl sm:text-7xl text-navy mb-10">
+      <h1 class="font-serif font-medium leading-tight text-4xl sm:text-7xl text-navy mb-8 sm:mb-10">
         Jaaa, wir freuen uns riesig!
       </h1>
 
@@ -392,11 +406,21 @@
       neinIstFrei = true;
     }
 
+    // Sichtbare Fläche – berücksichtigt mobile Browserleisten (visualViewport).
+    function sichtbareFlaeche() {
+      const vv = window.visualViewport;
+      return {
+        breite: vv ? vv.width : window.innerWidth,
+        hoehe: vv ? vv.height : window.innerHeight,
+      };
+    }
+
     function neuesZielSetzen() {
       const rect = btnNein.getBoundingClientRect();
+      const { breite, hoehe } = sichtbareFlaeche();
       const padding = 14;
-      const maxX = window.innerWidth - rect.width - padding;
-      const maxY = window.innerHeight - rect.height - padding;
+      const maxX = breite - rect.width - padding;
+      const maxY = hoehe - rect.height - padding;
 
       const targetLeft = padding + Math.random() * Math.max(0, maxX - padding);
       const targetTop = padding + Math.random() * Math.max(0, maxY - padding);
@@ -484,7 +508,8 @@
     // ---- Leichtgewichtiges Konfetti (reines CSS/JS, ohne Library) -------
     function starteKonfetti() {
       const farben = ['#1f3552', '#b8924a', '#e9c46a', '#ffffff', '#3a5a85'];
-      const anzahl = reduzierteBewegung ? 28 : 120;
+      const klein = window.innerWidth < 640;
+      const anzahl = reduzierteBewegung ? 28 : (klein ? 70 : 120);
 
       for (let i = 0; i < anzahl; i++) {
         const piece = document.createElement('div');
@@ -507,19 +532,25 @@
     }
 
     // ---- Button bleibt auch bei Fenstergröße im sichtbaren Bereich ------
-    window.addEventListener('resize', () => {
+    function haltImBereich() {
       if (!neinIstFrei) return;
       const rect = btnNein.getBoundingClientRect();
+      const { breite, hoehe } = sichtbareFlaeche();
       const padding = 14;
-      const maxX = window.innerWidth - rect.width - padding;
-      const maxY = window.innerHeight - rect.height - padding;
+      const maxX = breite - rect.width - padding;
+      const maxY = hoehe - rect.height - padding;
       // Aktuelle absolute Position = home + Versatz
       let absX = Math.min(Math.max(padding, homeX + zielX), maxX);
       let absY = Math.min(Math.max(padding, homeY + zielY), maxY);
       zielX = absX - homeX;
       zielY = absY - homeY;
       btnNein.style.transform = `translate3d(${zielX}px, ${zielY}px, 0)`;
-    });
+    }
+    window.addEventListener('resize', haltImBereich);
+    window.addEventListener('orientationchange', haltImBereich);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', haltImBereich);
+    }
   </script>
 </body>
 </html>
