@@ -301,14 +301,14 @@
 
       <figure class="group mx-auto max-w-xl">
         <div class="overflow-hidden rounded-2xl shadow-xl shadow-navy/10 ring-1 ring-navy/5 bg-sandDeep">
-          <img id="img1" alt="Bjarne und ich"
+          <img id="img1" alt="Bjarne und ich" decoding="async"
                class="w-full h-80 sm:h-[28rem] object-contain transition-transform duration-700" />
         </div>
       </figure>
 
       <figure class="mx-auto mt-8 max-w-md">
         <div class="overflow-hidden rounded-2xl shadow-lg shadow-navy/10 ring-1 ring-navy/5 bg-sandDeep">
-          <img id="slideshow-img" alt="Erinnerung"
+          <img id="slideshow-img" alt="Erinnerung" decoding="async"
                class="w-full h-44 sm:h-60 object-contain" />
         </div>
         <figcaption class="mt-3 font-serif italic text-base text-navy/50">
@@ -335,22 +335,23 @@
     //  Bildpfade – hier einfach anpassen, falls du andere Bilder nutzt.
     // ============================================================
     // Foto, das nach dem "Ja" angezeigt wird – hier einfach anpassen.
-    const BILD_1 = 'public/PHOTO-2018-08-05-19-10-57.jpg';
+    // (Optimierte, verkleinerte Variante aus public/opt für schnelles Laden.)
+    const BILD_1 = 'public/opt/PHOTO-2018-08-05-19-10-57.jpg';
 
     // Fotos für die Hintergrund-Collage auf der Frage-Seite.
     // Hier einfach Dateien ergänzen/entfernen.
     const COLLAGE = [
-      'public/PHOTO-2018-08-05-19-11-50.jpg',
-      'public/PHOTO-2018-08-05-19-13-06.jpg',
-      'public/PHOTO-2018-08-05-20-01-36.jpg',
-      'public/PHOTO-2018-09-08-16-15-21.jpg',
-      'public/PHOTO-2018-09-08-16-15-22.jpg',
-      'public/PHOTO-2019-07-16-15-27-20.jpg',
-      'public/PHOTO-2019-07-16-17-29-50.jpg',
-      'public/PHOTO-2019-07-19-21-54-42.jpg',
-      'public/PHOTO-2019-12-24-20-20-40.jpg',
-      'public/PHOTO-2025-01-08-20-05-03.jpg',
-      'public/PHOTO-2025-06-15-19-03-52.jpg',
+      'public/opt/PHOTO-2018-08-05-19-11-50.jpg',
+      'public/opt/PHOTO-2018-08-05-19-13-06.jpg',
+      'public/opt/PHOTO-2018-08-05-20-01-36.jpg',
+      'public/opt/PHOTO-2018-09-08-16-15-21.jpg',
+      'public/opt/PHOTO-2018-09-08-16-15-22.jpg',
+      'public/opt/PHOTO-2019-07-16-15-27-20.jpg',
+      'public/opt/PHOTO-2019-07-16-17-29-50.jpg',
+      'public/opt/PHOTO-2019-07-19-21-54-42.jpg',
+      'public/opt/PHOTO-2019-12-24-20-20-40.jpg',
+      'public/opt/PHOTO-2025-01-08-20-05-03.jpg',
+      'public/opt/PHOTO-2025-06-15-19-03-52.jpg',
     ];
 
     // Respektiert die System-Einstellung "weniger Bewegung".
@@ -367,6 +368,7 @@
         img.src = COLLAGE[i % COLLAGE.length];
         img.alt = '';
         img.loading = 'eager';
+        img.decoding = 'async';
         img.style.setProperty('--rotation', `${-4 + Math.random() * 8}deg`);
         img.style.setProperty('--duration', `${7 + Math.random() * 5}s`);
         img.addEventListener('click', () => oeffneLightbox(img.src));
