@@ -195,26 +195,18 @@
         Jaaa, wir freuen uns riesig!
       </h1>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
-        <figure class="group">
-          <div class="overflow-hidden rounded-2xl shadow-xl shadow-navy/10 ring-1 ring-navy/5">
-            <img id="img1" alt="Foto 1"
-                 class="w-full h-72 sm:h-96 object-cover transition-transform duration-700 group-hover:scale-105" />
-          </div>
-        </figure>
-        <figure class="group">
-          <div class="overflow-hidden rounded-2xl shadow-xl shadow-navy/10 ring-1 ring-navy/5">
-            <img id="img2" alt="Foto 2"
-                 class="w-full h-72 sm:h-96 object-cover transition-transform duration-700 group-hover:scale-105" />
-          </div>
-        </figure>
-      </div>
+      <figure class="group mx-auto max-w-xl">
+        <div class="overflow-hidden rounded-2xl shadow-xl shadow-navy/10 ring-1 ring-navy/5">
+          <img id="img1" alt="Bjarne und ich"
+               class="w-full h-80 sm:h-[28rem] object-cover transition-transform duration-700 group-hover:scale-105" />
+        </div>
+      </figure>
 
       <p class="mt-10 font-serif text-2xl sm:text-3xl text-navy/80">
         Bis bald, lieber Michael &mdash; auf einen wunderschönen 60.! &#127881;
       </p>
       <p class="mt-4 text-sm sm:text-base tracking-wide text-navy/50">
-        In Liebe, deine Überraschungsgäste
+        In Liebe, deine Lieblingsgäste
       </p>
     </section>
   </main>
@@ -223,8 +215,8 @@
     // ============================================================
     //  Bildpfade – hier einfach anpassen, falls du andere Bilder nutzt.
     // ============================================================
-    const BILD_1 = 'public/bild1.jpg';
-    const BILD_2 = 'public/bild2.jpg';
+    // Foto, das nach dem "Ja" angezeigt wird – hier einfach anpassen.
+    const BILD_1 = 'public/PHOTO-2018-08-05-19-10-57.jpg';
 
     // Fotos für die Hintergrund-Collage auf der Frage-Seite.
     // Hier einfach Dateien ergänzen/entfernen.
@@ -325,9 +317,8 @@
       if (gewechselt) return;
       gewechselt = true;
 
-      // Bilder vorab laden, dann erst einblenden – kein Aufploppen.
+      // Bild vorab laden, dann erst einblenden – kein Aufploppen.
       document.getElementById('img1').src = BILD_1;
-      document.getElementById('img2').src = BILD_2;
 
       // 1) Frage-Ansicht + Collage sanft ausblenden
       viewFrage.classList.add('view-hide');
