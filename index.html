@@ -134,17 +134,40 @@
     /* Konfetti */
     .confetti-piece {
       position: fixed;
-      top: -12vh;
-      width: 10px;
-      height: 16px;
+      top: -8vh;
+      width: var(--size, 9px);
+      height: calc(var(--size, 9px) * 1.55);
       border-radius: 2px;
       z-index: 60;
       pointer-events: none;
       opacity: 0;
+      will-change: transform, opacity;
+      backface-visibility: hidden;
+      animation-name: confettiFall;
+      animation-timing-function: linear;
+      animation-fill-mode: forwards;
+      animation-iteration-count: 1;
     }
     @keyframes confettiFall {
-      0%   { transform: translate3d(0, 0, 0) rotateZ(0deg); opacity: 1; }
-      100% { transform: translate3d(var(--drift), 115vh, 0) rotateZ(720deg); opacity: 1; }
+      0% {
+        opacity: 0;
+        transform: translate3d(0, -8vh, 0) rotate3d(1, 1, 0, 0deg);
+      }
+      8% { opacity: 1; }
+      25% {
+        transform: translate3d(calc(var(--drift) * 0.35), 22vh, 0) rotate3d(1, 1, 0.4, 180deg);
+      }
+      50% {
+        transform: translate3d(calc(var(--drift) * -0.25), 50vh, 0) rotate3d(1, 1, 0.4, 360deg);
+      }
+      75% {
+        transform: translate3d(calc(var(--drift) * 0.45), 78vh, 0) rotate3d(1, 1, 0.4, 540deg);
+      }
+      88% { opacity: 1; }
+      100% {
+        opacity: 0;
+        transform: translate3d(var(--drift), 110vh, 0) rotate3d(1, 1, 0.4, var(--spin, 720deg));
+      }
     }
 
     /* Wachsendes Herz als Reaktion auf die "Nein"-Jagd */
@@ -511,26 +534,37 @@
     function starteKonfetti() {
       const farben = ['#1f3552', '#b8924a', '#e9c46a', '#ffffff', '#3a5a85'];
       const klein = window.innerWidth < 640;
-      const anzahl = reduzierteBewegung ? 28 : (klein ? 70 : 120);
+      const anzahl = reduzierteBewegung ? 28 : (klein ? 80 : 130);
+
+      // Alle Teile gesammelt einfügen – vermeidet Layout-Ruckler.
+      const fragment = document.createDocumentFragment();
 
       for (let i = 0; i < anzahl; i++) {
         const piece = document.createElement('div');
         piece.className = 'confetti-piece';
 
-        const left = Math.random() * 100;
-        const drift = (Math.random() - 0.5) * 240 + 'px';
-        const dauer = 2.4 + Math.random() * 1.8;
-        const delay = Math.random() * 0.6;
+        const groesse = 7 + Math.random() * 6;            // px
+        const drift = (Math.random() - 0.5) * 36;          // vw (responsiv)
+        const spin = 360 + Math.random() * 720;            // deg
+        const dauer = 3 + Math.random() * 2;               // s
+        const delay = Math.random() * 0.5;                 // s
 
-        piece.style.left = left + 'vw';
+        piece.style.left = (Math.random() * 100) + 'vw';
         piece.style.background = farben[Math.floor(Math.random() * farben.length)];
-        piece.style.setProperty('--drift', drift);
-        piece.style.animation = `confettiFall ${dauer}s ${delay}s cubic-bezier(0.4, 0, 0.6, 1) forwards`;
+        piece.style.setProperty('--size', groesse.toFixed(1) + 'px');
+        piece.style.setProperty('--drift', drift.toFixed(2) + 'vw');
+        piece.style.setProperty('--spin', spin.toFixed(0) + 'deg');
+        piece.style.animationDuration = dauer.toFixed(2) + 's';
+        piece.style.animationDelay = delay.toFixed(2) + 's';
         if (Math.random() > 0.5) piece.style.borderRadius = '50%';
 
-        document.body.appendChild(piece);
-        setTimeout(() => piece.remove(), (dauer + delay) * 1000 + 200);
+        // Sauber aufräumen, sobald die Animation durch ist.
+        piece.addEventListener('animationend', () => piece.remove());
+
+        fragment.appendChild(piece);
       }
+
+      document.body.appendChild(fragment);
     }
 
     // ---- Button bleibt auch bei Fenstergröße im sichtbaren Bereich ------
