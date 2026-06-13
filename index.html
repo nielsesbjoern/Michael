@@ -66,6 +66,7 @@
       border-radius: 8px;
       box-shadow: 0 18px 45px rgba(31, 53, 82, 0.18);
       opacity: 0.88;
+      cursor: zoom-in;
       transform: rotate(var(--rotation)) scale(1.04);
       animation: collageBreathe var(--duration) ease-in-out infinite alternate;
     }
@@ -83,7 +84,7 @@
         radial-gradient(60% 55% at 50% 50%, rgba(247,243,236,0.94) 0%, rgba(247,243,236,0.76) 45%, rgba(239,231,216,0.58) 100%);
       transition: opacity 0.6s ease;
     }
-    .collage-hidden { opacity: 0 !important; }
+    .collage-hidden { opacity: 0 !important; pointer-events: none !important; }
 
     .question-card {
       border: 1px solid rgba(184, 146, 74, 0.22);
@@ -130,6 +131,69 @@
       0%   { transform: translate3d(0, 0, 0) rotateZ(0deg); opacity: 1; }
       100% { transform: translate3d(var(--drift), 115vh, 0) rotateZ(720deg); opacity: 1; }
     }
+
+    /* Wachsendes Herz als Reaktion auf die "Nein"-Jagd */
+    #herz {
+      display: inline-block;
+      font-size: 1.5rem;
+      line-height: 1;
+      color: #c2476a;
+      transform: scale(0);
+      opacity: 0;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease;
+      will-change: transform;
+    }
+
+    /* Lightbox für die Collage-Fotos */
+    #lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5vw;
+      background: rgba(20, 30, 46, 0.82);
+      backdrop-filter: blur(4px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+    #lightbox.open { opacity: 1; pointer-events: auto; cursor: zoom-out; }
+    #lightbox img {
+      max-width: 100%;
+      max-height: 86vh;
+      border: 10px solid #fff;
+      border-radius: 10px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+      transform: scale(0.92);
+      transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    #lightbox.open img { transform: scale(1); }
+
+    /* Mini-Slideshow auf der Ja-Seite */
+    #slideshow-img {
+      transition: opacity 0.7s ease;
+    }
+    #slideshow-img.fading { opacity: 0; }
+
+    /* Barrierearm: weniger Bewegung respektieren */
+    @media (prefers-reduced-motion: reduce) {
+      #collage img {
+        animation: none !important;
+        transform: rotate(var(--rotation)) scale(1.04);
+      }
+      .fade-up { animation-duration: 0.01ms; }
+      #btn-nein,
+      .view,
+      #collage,
+      #collage-veil,
+      #lightbox,
+      #lightbox img,
+      #herz {
+        transition-duration: 0.001ms !important;
+      }
+    }
   </style>
 </head>
 
@@ -139,10 +203,10 @@
   <div id="collage" aria-hidden="true"></div>
   <div id="collage-veil" aria-hidden="true"></div>
 
-  <main class="relative z-10 min-h-screen flex items-center justify-center px-6 py-12">
+  <main class="pointer-events-none relative z-10 min-h-screen flex items-center justify-center px-6 py-12">
 
     <!-- ===================== FRAGE-ANSICHT ===================== -->
-    <section id="view-frage" class="view text-center max-w-2xl fade-up">
+    <section id="view-frage" class="view pointer-events-auto text-center max-w-2xl fade-up">
       <p class="font-serif italic text-gold text-xl sm:text-2xl tracking-wide mb-3">
         Sylt &middot; 60. Geburtstag
       </p>
@@ -182,11 +246,12 @@
         </div>
       </div>
 
-      <p class="mt-10 text-sm text-navy/40">Tipp: Versuch ruhig mal auf &bdquo;Nein&ldquo; zu klicken. ;)</p>
+      <p id="nein-hinweis" class="mt-10 text-sm text-navy/40">Tipp: Versuch ruhig mal auf &bdquo;Nein&ldquo; zu klicken. ;)</p>
+      <div class="mt-3 h-10 flex items-center justify-center"><span id="herz">&#10084;</span></div>
     </section>
 
     <!-- ===================== JA-ANSICHT ===================== -->
-    <section id="view-ja" class="view hidden text-center max-w-4xl">
+    <section id="view-ja" class="view pointer-events-auto hidden text-center max-w-4xl">
       <p class="font-serif italic text-gold text-xl sm:text-2xl tracking-wide mb-3">
         Wir sehen uns auf Sylt!
       </p>
@@ -202,6 +267,16 @@
         </div>
       </figure>
 
+      <figure class="mx-auto mt-8 max-w-md">
+        <div class="overflow-hidden rounded-2xl shadow-lg shadow-navy/10 ring-1 ring-navy/5">
+          <img id="slideshow-img" alt="Erinnerung"
+               class="w-full h-44 sm:h-60 object-cover" />
+        </div>
+        <figcaption class="mt-3 font-serif italic text-base text-navy/50">
+          Ein paar Erinnerungen von uns &hellip;
+        </figcaption>
+      </figure>
+
       <p class="mt-10 font-serif text-2xl sm:text-3xl text-navy/80">
         Bis bald, lieber Michael &mdash; auf einen wunderschönen 60.! &#127881;
       </p>
@@ -210,6 +285,11 @@
       </p>
     </section>
   </main>
+
+  <!-- Lightbox für vergrößerte Collage-Fotos -->
+  <div id="lightbox" role="dialog" aria-modal="true" aria-label="Foto vergrößert">
+    <img id="lightbox-img" alt="Vergrößertes Foto" />
+  </div>
 
   <script>
     // ============================================================
@@ -234,6 +314,9 @@
       'public/PHOTO-2025-06-15-19-03-52.jpg',
     ];
 
+    // Respektiert die System-Einstellung "weniger Bewegung".
+    const reduzierteBewegung = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     // Collage befüllen – Bilder wiederholen, bis das Raster gut gefüllt ist.
     (function fuelleCollage() {
       const el = document.getElementById('collage');
@@ -247,9 +330,26 @@
         img.loading = 'eager';
         img.style.setProperty('--rotation', `${-4 + Math.random() * 8}deg`);
         img.style.setProperty('--duration', `${7 + Math.random() * 5}s`);
+        img.addEventListener('click', () => oeffneLightbox(img.src));
         el.appendChild(img);
       }
     })();
+
+    // ---- Lightbox: Collage-Foto groß anzeigen --------------------------
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+
+    function oeffneLightbox(src) {
+      lightboxImg.src = src;
+      lightbox.classList.add('open');
+    }
+    function schliesseLightbox() {
+      lightbox.classList.remove('open');
+    }
+    lightbox.addEventListener('click', schliesseLightbox);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') schliesseLightbox();
+    });
 
     const btnNein = document.getElementById('btn-nein');
     const btnJa = document.getElementById('btn-ja');
@@ -257,6 +357,23 @@
     const viewJa = document.getElementById('view-ja');
     const NEIN_TEXTE = ['Nein', 'Zu langsam!', 'Niemals!', 'Wirklich?', 'Versuch es nochmal', 'Keine Chance'];
     let neinTextIndex = 0;
+    let neinVersuche = 0;
+    const herz = document.getElementById('herz');
+    const neinHinweis = document.getElementById('nein-hinweis');
+
+    function reagiereAufJagd() {
+      neinVersuche += 1;
+      // Herz wächst mit jedem Versuch (bis zu einem Maximum).
+      const skala = Math.min(1 + neinVersuche * 0.25, 2.6);
+      herz.style.opacity = '1';
+      herz.style.transform = `scale(${skala})`;
+
+      if (neinVersuche === 3) {
+        neinHinweis.textContent = 'Na komm, du weißt doch, was du willst. \u263A';
+      } else if (neinVersuche >= 5) {
+        neinHinweis.innerHTML = 'Okay, &bdquo;Ja&ldquo; ist da dr&uuml;ben \uD83D\uDC49';
+      }
+    }
 
     // ---- Der weglaufende "Nein"-Button ----------------------------------
     let neinIstFrei = false;
@@ -289,6 +406,7 @@
       btnNein.style.transform = `translate3d(${zielX}px, ${zielY}px, 0)`;
       neinTextIndex = (neinTextIndex + 1) % NEIN_TEXTE.length;
       btnNein.textContent = NEIN_TEXTE[neinTextIndex];
+      reagiereAufJagd();
     }
 
     function neinWeglaufen() {
@@ -335,13 +453,38 @@
           viewJa.classList.remove('view-hide');
         }));
         starteKonfetti();
+        starteSlideshow();
       }, 450);
     });
+
+    // ---- Mini-Slideshow: blättert durch ein paar Collage-Fotos ---------
+    function starteSlideshow() {
+      const bild = document.getElementById('slideshow-img');
+      if (!bild || COLLAGE.length === 0) return;
+
+      let index = 0;
+      bild.src = COLLAGE[index];
+
+      setInterval(() => {
+        index = (index + 1) % COLLAGE.length;
+        const naechstes = COLLAGE[index];
+        // Sanftes Überblenden (bei reduzierter Bewegung direkt wechseln).
+        if (reduzierteBewegung) {
+          bild.src = naechstes;
+          return;
+        }
+        bild.classList.add('fading');
+        setTimeout(() => {
+          bild.src = naechstes;
+          bild.classList.remove('fading');
+        }, 700);
+      }, 3000);
+    }
 
     // ---- Leichtgewichtiges Konfetti (reines CSS/JS, ohne Library) -------
     function starteKonfetti() {
       const farben = ['#1f3552', '#b8924a', '#e9c46a', '#ffffff', '#3a5a85'];
-      const anzahl = 120;
+      const anzahl = reduzierteBewegung ? 28 : 120;
 
       for (let i = 0; i < anzahl; i++) {
         const piece = document.createElement('div');
