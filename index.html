@@ -67,14 +67,19 @@
         padding: 8px;
       }
       #collage img {
-        border-width: 5px;
-        /* Auf dem Handy noch etwas höher ansetzen, damit Gesichter sichtbar bleiben. */
-        object-position: center 24%;
+        border-width: 4px;
+        /* Auf dem Handy ganzes Foto zeigen statt zuschneiden – sonst werden
+           die Gesichter abgeschnitten. */
+        object-fit: contain;
+        object-position: center;
+        background: #fff;
+        opacity: 1;
       }
-      /* Auf dem Handy etwas deckender, damit Text/Buttons klar lesbar bleiben */
+      /* Auf dem Handy: Schleier nur in der Mitte (hinter Text/Buttons) deckend,
+         außen transparent – damit die Fotos klar erkennbar bleiben. */
       #collage-veil {
         background:
-          radial-gradient(75% 60% at 50% 45%, rgba(247,243,236,0.96) 0%, rgba(247,243,236,0.86) 50%, rgba(239,231,216,0.72) 100%);
+          radial-gradient(60% 42% at 50% 46%, rgba(247,243,236,0.9) 0%, rgba(247,243,236,0.62) 55%, rgba(239,231,216,0.18) 100%);
       }
     }
     #collage img {
@@ -261,16 +266,16 @@
       </h1>
 
       <h2 class="font-serif text-2xl sm:text-5xl text-navy/90 mb-8 sm:mb-12">
-        Freust du dich, dass wir kommen?
+        Freut ihr euch, dass wir kommen?
       </h2>
 
       <div class="question-card rounded-[1.75rem] sm:rounded-[2rem] px-5 sm:px-10 py-7 sm:py-10">
         <p class="font-serif text-xl sm:text-3xl text-navy/80 mb-6 sm:mb-7">
-          Deine Lieblingsneffen kommen!
+          Eure Lieblingsneffen kommen!
         </p>
 
-        <!-- Buttons-Container: relativ, damit der "Nein"-Button sich frei platzieren kann -->
-        <div class="flex items-center justify-center gap-4 sm:gap-6">
+        <!-- Buttons-Container: "Nein" sitzt unter "Ja" und springt dort seitlich -->
+        <div class="flex flex-col items-center justify-center gap-4 sm:gap-5">
           <button
             id="btn-ja"
             class="px-10 sm:px-12 py-3.5 sm:py-4 rounded-full bg-navy text-white text-base sm:text-lg font-medium tracking-wide
@@ -291,7 +296,7 @@
         </div>
       </div>
 
-      <p id="nein-hinweis" class="mt-10 text-sm text-navy/40">Tipp: Versuch ruhig mal auf &bdquo;Nein&ldquo; zu klicken. ;)</p>
+      <p id="nein-hinweis" class="mt-10 text-sm text-navy/40">Tipp: Versucht ruhig mal auf &bdquo;Nein&ldquo; zu klicken. ;)</p>
       <div class="mt-3 h-10 flex items-center justify-center"><span id="herz">&#10084;</span></div>
     </section>
 
@@ -326,7 +331,7 @@
         Bis bald, lieber Michael, lieber Ekvard &mdash; auf ein wunderschönes Fest! &#127881;
       </p>
       <p class="mt-4 text-sm sm:text-base tracking-wide text-navy/50">
-        In Liebe, deine Lieblingsgäste
+        In Liebe, eure Lieblingsgäste
       </p>
     </section>
   </main>
@@ -404,9 +409,10 @@
 
     const btnNein = document.getElementById('btn-nein');
     const btnJa = document.getElementById('btn-ja');
+    const box = document.querySelector('.question-card');
     const viewFrage = document.getElementById('view-frage');
     const viewJa = document.getElementById('view-ja');
-    const NEIN_TEXTE = ['Nein', 'Zu langsam!', 'Niemals!', 'Wirklich?', 'Versuch es nochmal', 'Keine Chance'];
+    const NEIN_TEXTE = ['Nein', 'Zu langsam!', 'Niemals!', 'Wirklich?', 'Versucht es nochmal', 'Keine Chance', 'Knapp daneben!', 'Nicht mit uns!'];
     let neinTextIndex = 0;
     let neinVersuche = 0;
     const herz = document.getElementById('herz');
@@ -420,28 +426,19 @@
       herz.style.transform = `scale(${skala})`;
 
       if (neinVersuche === 3) {
-        neinHinweis.textContent = 'Na komm, du weißt doch, was du willst. \u263A';
+        neinHinweis.textContent = 'Na kommt, ihr wisst doch, was ihr wollt. \u263A';
       } else if (neinVersuche >= 5) {
         neinHinweis.innerHTML = 'Okay, &bdquo;Ja&ldquo; ist da dr&uuml;ben \uD83D\uDC49';
       }
     }
 
     // ---- Der weglaufende "Nein"-Button ----------------------------------
-    let neinIstFrei = false;
-    let homeX = 0, homeY = 0;          // Ursprüngliche (fixierte) Ankerposition
-    let zielX = 0, zielY = 0;          // Aktuelles Bewegungsziel (für Resize)
-
-    function neinFixieren() {
-      const rect = btnNein.getBoundingClientRect();
-      homeX = rect.left;
-      homeY = rect.top;
-      btnNein.style.position = 'fixed';
-      btnNein.style.left = homeX + 'px';
-      btnNein.style.top = homeY + 'px';
-      btnNein.style.margin = '0';
-      btnNein.style.transform = 'translate3d(0,0,0)';
-      neinIstFrei = true;
-    }
+    // Der Button bleibt im normalen Layout (direkt unter "Ja") und wird NUR
+    // horizontal per transform verschoben – dadurch keine vertikale Bewegung
+    // und kein Layout-Sprung.
+    let versatzX = 0;                  // Aktueller horizontaler Versatz (px)
+    let zeigerX = null;                // Letzte bekannte Zeigerposition (X)
+    let seiteRechts = false;           // Zuletzt rechts gewesen? -> dann nach links
 
     // Sichtbare Fläche – berücksichtigt mobile Browserleisten (visualViewport).
     function sichtbareFlaeche() {
@@ -454,41 +451,62 @@
 
     function neuesZielSetzen() {
       const rect = btnNein.getBoundingClientRect();
-      const { breite, hoehe } = sichtbareFlaeche();
-      const padding = 14;
-      const maxX = breite - rect.width - padding;
-      const maxY = hoehe - rect.height - padding;
+      const innen = 8; // kleiner Innenabstand zum Rand der Box
+      // Layout-Position ohne aktuellen Versatz (Ankerpunkt links).
+      const basisLinks = rect.left - versatzX;
 
-      const targetLeft = padding + Math.random() * Math.max(0, maxX - padding);
-      const targetTop = padding + Math.random() * Math.max(0, maxY - padding);
+      // Grenzen anhand der braunen Box (question-card) bestimmen.
+      const boxRect = box.getBoundingClientRect();
+      const minVersatz = (boxRect.left + innen) - basisLinks;          // ganz links
+      const maxVersatz = (boxRect.right - innen - rect.width) - basisLinks; // ganz rechts
 
-      zielX = targetLeft - homeX;
-      zielY = targetTop - homeY;
-      btnNein.style.transform = `translate3d(${zielX}px, ${zielY}px, 0)`;
+      // Immer zur gegenüberliegenden Seite springen, so weit wie möglich.
+      seiteRechts = !seiteRechts;
+      versatzX = seiteRechts ? maxVersatz : minVersatz;
+
+      btnNein.style.transform = `translate3d(${versatzX}px, 0, 0)`;
       neinTextIndex = (neinTextIndex + 1) % NEIN_TEXTE.length;
       btnNein.textContent = NEIN_TEXTE[neinTextIndex];
       reagiereAufJagd();
     }
 
     function neinWeglaufen() {
-      if (!neinIstFrei) {
-        neinFixieren();
-        // Auf den nächsten Frame warten, damit die Transition sauber greift
-        // und der erste Sprung nicht ruckelt.
-        requestAnimationFrame(() => requestAnimationFrame(neuesZielSetzen));
-      } else {
-        neuesZielSetzen();
-      }
+      neuesZielSetzen();
     }
 
     // Sowohl Maus als auch Touch/Pointer abfangen – niemals anklickbar.
     btnNein.addEventListener('pointerenter', neinWeglaufen);
     btnNein.addEventListener('mouseenter', neinWeglaufen);
-    btnNein.addEventListener('mousedown', (e) => { e.preventDefault(); neinWeglaufen(); });
-    btnNein.addEventListener('click', (e) => { e.preventDefault(); neinWeglaufen(); });
+    btnNein.addEventListener('mousedown', (e) => { e.preventDefault(); zeigerX = e.clientX; neinWeglaufen(); });
+    btnNein.addEventListener('click', (e) => { e.preventDefault(); zeigerX = e.clientX; neinWeglaufen(); });
     btnNein.addEventListener('focus', neinWeglaufen);
     // Auf Touch-Geräten: bei der ersten Berührung schon wegspringen.
-    btnNein.addEventListener('touchstart', (e) => { e.preventDefault(); neinWeglaufen(); }, { passive: false });
+    btnNein.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (e.touches[0]) zeigerX = e.touches[0].clientX;
+      neinWeglaufen();
+    }, { passive: false });
+
+    // Schon ausweichen, BEVOR man ihn treffen kann: sobald sich der Zeiger nähert.
+    let letzterSprung = 0;
+    const NAEHE = 80; // px Abstand, ab dem der Button flüchtet
+    function pruefeNaehe(x, y) {
+      zeigerX = x;
+      const jetzt = Date.now();
+      if (jetzt - letzterSprung < 220) return; // kurze Pause während der Animation
+      const r = btnNein.getBoundingClientRect();
+      const dx = Math.max(r.left - x, 0, x - r.right);
+      const dy = Math.max(r.top - y, 0, y - r.bottom);
+      if (Math.hypot(dx, dy) < NAEHE) {
+        letzterSprung = jetzt;
+        neuesZielSetzen();
+      }
+    }
+    window.addEventListener('pointermove', (e) => pruefeNaehe(e.clientX, e.clientY));
+    window.addEventListener('touchmove', (e) => {
+      const t = e.touches[0];
+      if (t) pruefeNaehe(t.clientX, t.clientY);
+    }, { passive: true });
 
     // ---- "Ja"-Klick: weicher Ansichtswechsel + Konfetti ----------------
     let gewechselt = false;
@@ -581,18 +599,15 @@
 
     // ---- Button bleibt auch bei Fenstergröße im sichtbaren Bereich ------
     function haltImBereich() {
-      if (!neinIstFrei) return;
+      if (versatzX === 0) return;
       const rect = btnNein.getBoundingClientRect();
-      const { breite, hoehe } = sichtbareFlaeche();
-      const padding = 14;
-      const maxX = breite - rect.width - padding;
-      const maxY = hoehe - rect.height - padding;
-      // Aktuelle absolute Position = home + Versatz
-      let absX = Math.min(Math.max(padding, homeX + zielX), maxX);
-      let absY = Math.min(Math.max(padding, homeY + zielY), maxY);
-      zielX = absX - homeX;
-      zielY = absY - homeY;
-      btnNein.style.transform = `translate3d(${zielX}px, ${zielY}px, 0)`;
+      const innen = 8;
+      const basisLinks = rect.left - versatzX;
+      const boxRect = box.getBoundingClientRect();
+      const minVersatz = (boxRect.left + innen) - basisLinks;
+      const maxVersatz = (boxRect.right - innen - rect.width) - basisLinks;
+      versatzX = Math.min(Math.max(versatzX, minVersatz), maxVersatz);
+      btnNein.style.transform = `translate3d(${versatzX}px, 0, 0)`;
     }
     window.addEventListener('resize', haltImBereich);
     window.addEventListener('orientationchange', haltImBereich);
